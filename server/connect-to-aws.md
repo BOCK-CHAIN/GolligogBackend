@@ -23,7 +23,7 @@ DATABASE_URL="postgresql://<username>:<password>@<host>:<port>/<database>?schema
 change username to your username
 change password to your password
 change host to your endpoint
-change port to 5342
+change port to 5432
 change database to your database name
 
 
@@ -46,3 +46,11 @@ Source: EC2 security group
 
 
 ✅ This lets your EC2 backend communicate with RDS.
+
+
+
+Invoke-WebRequest -Uri "http://yourip:5000/api/auth/register" -Method POST -ContentType "application/json" -Body '{"email":"test1@example.com","password":"password123","name":"Test User"}'
+
+
+
+
