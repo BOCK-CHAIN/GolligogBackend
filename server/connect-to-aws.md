@@ -15,7 +15,7 @@ git clone <your-github-repo-url>
 cd <repo-name>
 npm install
 
-nana .env
+nano .env
 change the database url in the format 
 
 DATABASE_URL="postgresql://<username>:<password>@<host>:<port>/<database>?schema=public"
