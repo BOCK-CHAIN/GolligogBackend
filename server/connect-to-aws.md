@@ -18,6 +18,8 @@ npm install
 nano .env
 change the database url in the format 
 
+and make the database created to be publically accessable
+
 DATABASE_URL="postgresql://<username>:<password>@<host>:<port>/<database>?schema=public"
 
 change username to your username

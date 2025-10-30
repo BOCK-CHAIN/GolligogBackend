@@ -33,7 +33,7 @@ search:
 server:
   port: 8080
   bind_address: 0.0.0.0
-  base_url: http://localhost:8080
+  base_url: false
   limiter: false
   public_instance: false
   secret_key: bb621905867bb2c3aad14136473e40d3ceff6cbf8fb039db9cba6a216486849e
