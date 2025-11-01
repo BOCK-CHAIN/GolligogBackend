@@ -9,42 +9,57 @@ from flask_cors import CORS
 import requests
 import json
 import os
+import logging
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # SearXNG configuration
 SEARXNG_BASE_URL = os.environ.get('SEARXNG_URL', 'http://localhost:8080')
 SEARXNG_SEARCH_ENDPOINT = '/search'
 
-# Public SearXNG instances as fallback
+# Public SearXNG instances as fallback (reliable instances)
 PUBLIC_INSTANCES = [
     'https://search.sapti.me',
     'https://searx.be',
     'https://searx.info',
     'https://search.mdosch.de',
     'https://searx.tiekoetter.com',
+    'https://searx.fmac.xyz',
+    'https://searx.namejeff.xyz'
 ]
 
-def search_with_instance(instance_url, params):
+def search_with_instance(instance_url, params, client_ip='127.0.0.1'):
     """Search using a specific SearXNG instance"""
     try:
+        # Add proper proxy headers to prevent bot detection errors
+        headers = {
+            'User-Agent': 'Golligog-Flutter-Backend/1.0',
+            'Accept': 'application/json',
+            'X-Forwarded-For': client_ip,
+            'X-Real-IP': client_ip,
+            'X-Forwarded-Proto': 'http',
+            'X-Forwarded-Host': 'localhost'
+        }
+        
         response = requests.get(
             f"{instance_url}{SEARXNG_SEARCH_ENDPOINT}",
             params=params,
-            headers={
-                'User-Agent': 'Golligog-Flutter-Backend/1.0',
-                'Accept': 'application/json'
-            },
+            headers=headers,
             timeout=10
         )
         
         if response.status_code == 200:
             return response.json()
         else:
+            logger.warning(f"Instance {instance_url} returned status {response.status_code}")
             return None
     except Exception as e:
-        print(f"Error with instance {instance_url}: {e}")
+        logger.error(f"Error with instance {instance_url}: {e}")
         return None
 
 def filter_result_sources(result_data):
@@ -87,38 +102,51 @@ def search():
     if not query:
         return jsonify({'error': 'Query parameter "q" is required'}), 400
     
-    # Map category to appropriate Google engines
+    # Get client IP for proper forwarding
+    client_ip = request.headers.get('X-Forwarded-For', request.headers.get('X-Real-IP', request.remote_addr))
+    
+    # Map category to appropriate engines (fallback to multiple if one fails)
     category = request.args.get('category', 'general')
-    google_engines_map = {
-        'general': 'google',
-        'images': 'google_images',
-        'news': 'google_news', 
-        'videos': 'google_videos',
-        'science': 'google_scholar',
-        'files': 'google_scholar',  # Use scholar for academic files
-        'map': 'google',  # Use regular google for map-related queries
+    engines_map = {
+        'general': ['google', 'bing', 'duckduckgo'],
+        'images': ['google_images', 'bing_images'],
+        'news': ['google_news', 'bing_news'],
+        'videos': ['google_videos', 'bing_videos'],
+        'science': ['google_scholar', 'semantic_scholar'],
+        'files': ['google_scholar'],
+        'map': ['openstreetmap'],
     }
     
-    # Force Google engines only
-    selected_engine = google_engines_map.get(category, 'google')
+    # Get list of engines to try
+    engines_to_try = engines_map.get(category, ['google', 'bing', 'duckduckgo'])
     
-    # Search parameters - force Google engines
-    params = {
-        'q': query,
-        'format': 'json',
-        'engines': selected_engine,  # Force specific Google engine
-        'lang': request.args.get('lang', 'en'),
-        'pageno': request.args.get('page', '1'),
-    }
-    
-    # Try local instance first
-    result = search_with_instance(SEARXNG_BASE_URL, params)
-    
-    # If local instance fails, try public instances
-    if not result:
-        for instance in PUBLIC_INSTANCES:
-            result = search_with_instance(instance, params)
-            if result:
+    # Search parameters - try multiple engines if one fails
+    result = None
+    for engine in engines_to_try:
+        params = {
+            'q': query,
+            'format': 'json',
+            'engines': engine,
+            'lang': request.args.get('lang', 'en'),
+            'pageno': request.args.get('page', '1'),
+        }
+        
+        # Try local instance first
+        result = search_with_instance(SEARXNG_BASE_URL, params, client_ip)
+        
+        if result and result.get('results'):
+            logger.info(f"Got results from {engine} engine")
+            break
+        
+        # If local instance fails, try public instances
+        if not result:
+            for instance in PUBLIC_INSTANCES:
+                result = search_with_instance(instance, params, client_ip)
+                if result and result.get('results'):
+                    logger.info(f"Got results from {engine} engine on {instance}")
+                    break
+            
+            if result and result.get('results'):
                 break
     
     if result:
@@ -137,12 +165,21 @@ def search():
 def engines():
     """Get available engines from SearXNG"""
     try:
+        # Get client IP for proper forwarding
+        client_ip = request.headers.get('X-Forwarded-For', request.headers.get('X-Real-IP', request.remote_addr))
+        
+        headers = {
+            'User-Agent': 'Golligog-Flutter-Backend/1.0',
+            'Accept': 'application/json',
+            'X-Forwarded-For': client_ip,
+            'X-Real-IP': client_ip,
+            'X-Forwarded-Proto': 'http',
+            'X-Forwarded-Host': 'localhost'
+        }
+        
         response = requests.get(
             f"{SEARXNG_BASE_URL}/engines",
-            headers={
-                'User-Agent': 'Golligog-Flutter-Backend/1.0',
-                'Accept': 'application/json'
-            },
+            headers=headers,
             timeout=5
         )
         

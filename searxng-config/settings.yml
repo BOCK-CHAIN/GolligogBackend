@@ -1,0 +1,140 @@
+# SearXNG Configuration for Golligog - Docker Edition
+# This configuration is optimized for Docker deployment with Google-only results
+
+use_default_settings: true
+
+general:
+  debug: false
+  instance_name: "Golligog Search"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+  enable_metrics: false
+
+brand:
+  new_issue_url: ""
+  docs_url: ""
+  public_instances: ""
+  wiki_url: ""
+  issue_url: ""
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  max_page: 0
+  formats: ["json", "html"]
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  base_url: "http://localhost:8080/"
+  secret_key: "golligog-searxng-secret-key-change-in-production"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  http_protocol_version: "1.1"
+  method: "POST"
+
+# Redis for caching (optional)
+redis:
+  url: redis://redis:6379
+
+ui:
+  static_use_hash: false
+  default_locale: "en"
+  query_in_title: false
+  infinite_scroll: false
+  center_alignment: false
+  default_theme: "simple"
+  theme_args:
+    simple_style: "auto"
+
+outgoing:
+  request_timeout: 5.0
+  useragent_suffix: "Golligog"
+  pool_connections: 100
+  pool_maxsize: 20
+  enable_http2: true
+
+# Disable bot detection to prevent proxy header errors
+botdetection:
+  ip_lists:
+    pass_searxng_org: false
+  ip_limit:
+    filter_link_local: false
+    link_token: false
+
+# Optional: Create limiter config to prevent bot detection issues  
+limiter:
+  enable: false
+
+# Enable multiple search engines for better coverage and reliability
+engines:
+  - name: google
+    engine: google
+    shortcut: go
+    use_mobile_ui: false
+    disabled: false
+    timeout: 5.0
+
+  - name: google images
+    engine: google_images
+    shortcut: goi
+    disabled: false
+    timeout: 5.0
+
+  - name: google news
+    engine: google_news
+    shortcut: gon
+    disabled: false
+    timeout: 5.0
+
+  - name: google videos
+    engine: google_videos
+    shortcut: gov
+    disabled: false
+    timeout: 5.0
+
+  - name: google scholar
+    engine: google_scholar
+    shortcut: gos
+    disabled: false
+    timeout: 5.0
+
+  # Fallback engines for better reliability
+  - name: bing
+    engine: bing
+    shortcut: bi
+    disabled: false
+    timeout: 5.0
+
+  - name: bing images
+    engine: bing_images
+    shortcut: bii
+    disabled: false
+    timeout: 5.0
+
+  - name: bing news
+    engine: bing_news
+    shortcut: bin
+    disabled: false
+    timeout: 5.0
+
+  - name: bing videos
+    engine: bing_videos
+    shortcut: biv
+    disabled: false
+    timeout: 5.0
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    disabled: false
+    timeout: 5.0
+
+  - name: openstreetmap
+    engine: openstreetmap
+    shortcut: osm
+    disabled: false
+    timeout: 5.0
