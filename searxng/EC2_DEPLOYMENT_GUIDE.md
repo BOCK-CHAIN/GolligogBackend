@@ -121,3 +121,128 @@ python -m searx.webapp
    - Open browser: `http://<your-ec2-public-ip>:8080`
 
 ---
+
+
+
+Here’s a **step-by-step guide** to install **Docker** and **Docker Compose** on an **Ubuntu EC2 instance**, along with the most useful commands you’ll need 👇
+
+---
+
+## 🧠 Step 1: Update your system
+
+```bash
+sudo apt update -y && sudo apt upgrade -y
+```
+
+---
+
+## 🐳 Step 2: Install prerequisites
+
+These allow `apt` to use repositories over HTTPS.
+
+```bash
+sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
+```
+
+---
+
+## 🧩 Step 3: Add Docker’s official GPG key
+
+```bash
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+```
+
+---
+
+## 🧭 Step 4: Add Docker repository
+
+```bash
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+```
+
+---
+
+## 🧱 Step 5: Install Docker Engine
+
+```bash
+sudo apt update -y
+sudo apt install docker-ce docker-ce-cli containerd.io -y
+```
+
+---
+
+## ✅ Step 6: Verify Docker installation
+
+```bash
+sudo systemctl status docker
+```
+
+To see version:
+
+```bash
+docker --version
+```
+
+---
+
+## ⚙️ Step 7: Run Docker without sudo (optional but recommended)
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+Then log out and log back in (or run `newgrp docker`).
+
+---
+
+## 🧩 Step 8: Install Docker Compose (v2+)
+
+Docker Compose is now included as a **plugin** in Docker, but if you want standalone:
+
+### Option 1: Using apt (recommended for Ubuntu 22.04+)
+
+```bash
+sudo apt install docker-compose-plugin -y
+```
+
+Then check:
+
+```bash
+docker compose version
+```
+
+### Option 2: Install manually (for older Ubuntu)
+
+```bash
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+```
+
+---
+
+## 🚀 Step 9: Enable Docker on startup
+
+```bash
+sudo systemctl enable docker
+```
+
+---
+
+## 🔥 Common Docker Commands
+
+| Command                        | Description                                          |
+| ------------------------------ | ---------------------------------------------------- |
+| `docker ps`                    | List running containers                              |
+| `docker ps -a`                 | List all containers                                  |
+| `docker images`                | Show all downloaded images                           |
+| `docker pull <image>`          | Download image (e.g. `docker pull nginx`)            |
+| `docker run -d -p 80:80 nginx` | Run container in background on port 80               |
+| `docker stop <container_id>`   | Stop container                                       |
+| `docker rm <container_id>`     | Remove container                                     |
+| `docker rmi <image_id>`        | Remove image                                         |
+| `docker system prune -a`       | Clean up unused data                                 |
+| `docker compose up -d`         | Run services in background (from docker-compose.yml) |
+| `docker compose down`          | Stop and remove containers, networks, etc.           |
+
+---
