@@ -12,7 +12,28 @@ import os
 import logging
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# Configure CORS to allow requests from everywhere
+CORS(app, 
+     resources={
+         r"/*": {
+             "origins": "*",
+             "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "X-Real-IP", "X-Forwarded-For"],
+             "supports_credentials": False
+         }
+     },
+     expose_headers=["Content-Type"])
+
+# Add a catch-all for preflight requests
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify({"status": "ok"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With,X-Real-IP,X-Forwarded-For")
+        response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+        return response, 200
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -95,9 +116,13 @@ def filter_result_sources(result_data):
     
     return result_data
 
-@app.route('/api/search', methods=['GET'])
+@app.route('/api/search', methods=['GET', 'OPTIONS'])
+@app.route('/search', methods=['GET', 'OPTIONS'])
 def search():
     """Search endpoint that proxies to SearXNG with Google-only results"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     query = request.args.get('q', '').strip()
     if not query:
         return jsonify({'error': 'Query parameter "q" is required'}), 400
@@ -161,9 +186,12 @@ def search():
             'results': []
         }), 503
 
-@app.route('/api/engines', methods=['GET'])
+@app.route('/api/engines', methods=['GET', 'OPTIONS'])
 def engines():
     """Get available engines from SearXNG"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
         # Get client IP for proper forwarding
         client_ip = request.headers.get('X-Forwarded-For', request.headers.get('X-Real-IP', request.remote_addr))
@@ -191,9 +219,12 @@ def engines():
         print(f"Error getting engines: {e}")
         return jsonify([])
 
-@app.route('/api/health', methods=['GET'])
+@app.route('/api/health', methods=['GET', 'OPTIONS'])
 def health():
     """Health check endpoint"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     # Check if local SearXNG instance is available
     local_healthy = False
     try:
